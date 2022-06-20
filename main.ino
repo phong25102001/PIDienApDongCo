@@ -1,10 +1,12 @@
-
 int count = 0;
 int tempVoltage[101];
 int mean;
-double Kp = 0.8;
+float Kp = 0.8, Ki = 4.0;
 int error;
 int SetPoint = 0;
+float eInt = 0, deltaT = 4.0/490;
+int controlSignal; 
+
 
 void setup() 
 {
@@ -34,7 +36,18 @@ void loop()
   count++;
 
   error = SetPoint-mean;
-  analogWrite(9,int(Kp*error)/4);
+  eInt = eInt+error*deltaT;
+
+  controlSignal = (int(Kp*error)+int(Ki*eInt))/4;
+  
+  if (controlSignal >= 255)
+    controlSignal = 255;
+  else if (controlSignal < 0)
+    controlSignal = 0;   
+  analogWrite(9,controlSignal);
+  
+  Serial.print(controlSignal);
+  Serial.print(" ");
   Serial.print(SetPoint);
   Serial.print(" ");
   Serial.println(mean);
