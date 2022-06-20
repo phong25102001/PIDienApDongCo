@@ -1,7 +1,10 @@
-int bientro = 0;
+
 int count = 0;
 int tempVoltage[101];
 int mean;
+double Kp = 0.8;
+int error;
+int SetPoint = 0;
 
 void setup() 
 {
@@ -11,7 +14,7 @@ void setup()
 void loop() 
 {
   long total = 0L;
-  bientro = analogRead(A0);
+  SetPoint = analogRead(A0);
   
   if (count<100)
     tempVoltage[count] = analogRead(A1);
@@ -29,8 +32,10 @@ void loop()
   if (count>0)
     mean = total/count;
   count++;
-  analogWrite(9,bientro/4);
-  Serial.print(bientro);
+
+  error = SetPoint-mean;
+  analogWrite(9,int(Kp*error)/4);
+  Serial.print(SetPoint);
   Serial.print(" ");
   Serial.println(mean);
 }
