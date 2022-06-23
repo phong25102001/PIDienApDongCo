@@ -1,22 +1,35 @@
+#include <PID_v1.h>
+
 int count = 0;
 int tempVoltage[101];
 int mean;
-float Kp = 0.8, Ki = 4.0;
-int error;
-int SetPoint = 0;
-float eInt = 0, deltaT = 4.0/490;
-int controlSignal; 
+// tinh trung binh 100 gia tri de uoc luong dien ap Vo
 
+double Setpoint;
+double Input;
+double Output;
+double Kp = 0.8, Ki = 2, Kd = 0;
 
-void setup() 
+PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
+
+void setup()
 {
   Serial.begin(9600);
+  pinMode(9, OUTPUT);
+  myPID.SetMode(AUTOMATIC);
+  myPID.SetTunings(Kp, Ki, Kd);
+  
+  Setpoint = map(analogRead(A0),0,1023,0,255);
+  analogWrite(9,Setpoint);
+  delay(5000);
+ // myPID.SetSampleTime(1);
 }
 
-void loop() 
+void loop()
 {
+  Setpoint = map(analogRead(A0),0,1023,0,255);
+  
   long total = 0L;
-  SetPoint = analogRead(A0);
   
   if (count<100)
     tempVoltage[count] = analogRead(A1);
@@ -32,23 +45,14 @@ void loop()
     total = total + tempVoltage[i];
 
   if (count>0)
-    mean = total/count;
+    mean = total/count; // mean gan bang Vo
   count++;
-
-  error = SetPoint-mean;
-  eInt = eInt+error*deltaT;
-
-  controlSignal = (int(Kp*error)+int(Ki*eInt))/4;
   
-  if (controlSignal >= 255)
-    controlSignal = 255;
-  else if (controlSignal < 0)
-    controlSignal = 0;   
-  analogWrite(9,controlSignal);
-  
-  Serial.print(controlSignal);
+  Input = map(mean,0,1023,0,255); //doc dien ap vao scale de phu hop voi tin hieu ra
+  myPID.Compute();
+  analogWrite(9,Output);          // ghi tin hieu dieu khien PWM ra chan so 9
+
+  Serial.print(Setpoint);
   Serial.print(" ");
-  Serial.print(SetPoint);
-  Serial.print(" ");
-  Serial.println(mean);
+  Serial.println(Input);
 }
